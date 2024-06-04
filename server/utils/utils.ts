@@ -5,7 +5,7 @@ import * as anchor from "@project-serum/anchor"
 import { ApiV3PoolInfoStandardItem, Raydium, TxVersion, fetchMultipleInfo, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2/lib/index'
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { Connection, Keypair, Transaction } from "@solana/web3.js";
+import { ComputeBudgetProgram, Connection, Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
 import base58 from "bs58";
 const axios = require('axios');
 
@@ -66,10 +66,6 @@ export const getPoolInfo = async (mintAddress: string) => {
         tokenSymbol: baseToken.symbol,
         poolAddress: pair.pairAddress,
         timestamp: pairCreatedAt,
-        poolCreatedAt: moment(pairCreatedAt).tz('Asia/Shanghai').format(),
-        usdcPrice: Number(pair.priceUsd),
-        marketcap: Number(pair.fdv) / 1000,
-        liquidity: Number(pair.liquidity.usd) / 1000
       }
       return poolInfo
     }
@@ -80,10 +76,6 @@ export const getPoolInfo = async (mintAddress: string) => {
     tokenSymbol: "can't get data",
     poolAddress: "can't get data",
     timestamp: 0,
-    poolCreatedAt: "can't get data",
-    usdcPrice: 0,
-    marketcap: 0,
-    liquidity: 0
   }
   return poolInfo
 }
@@ -95,7 +87,6 @@ export const initSdk = async (connection: Connection, keypair: Keypair) => {
   raydium = await Raydium.load({
     owner,
     connection,
-    // cluster: 'mainnet', 
     disableFeatureCheck: true,
   })
   return raydium
@@ -104,13 +95,21 @@ export const initSdk = async (connection: Connection, keypair: Keypair) => {
 export const sendTxByJito = async (provider: anchor.AnchorProvider, transaction: Transaction) => {
   const lastBlockhash = await provider.connection.getLatestBlockhash()
 
+  transaction
+  .add(
+    anchor.web3.SystemProgram.transfer({
+      fromPubkey: provider.publicKey,
+      toPubkey: new anchor.web3.PublicKey("DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL"),
+      lamports: Number(process.env.JITO_FEE) * LAMPORTS_PER_SOL
+    })
+  )
+
   transaction.recentBlockhash = lastBlockhash.blockhash
   transaction.lastValidBlockHeight = lastBlockhash.lastValidBlockHeight
   transaction.feePayer = provider.publicKey
 
 
   provider.wallet.signTransaction(transaction)
-  console.log(transaction)
   const serializeTx = base58.encode(transaction.serialize())
   const result = jitoSendApi(serializeTx)
   return result
@@ -153,6 +152,7 @@ export async function getWallet(privateKey: string) : Promise<[NodeWallet , Keyp
 
 
 export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: number, txVersion = TxVersion.LEGACY): Promise<Transaction> {
+
   const data = (await raydium.api.fetchPoolById({ ids: poolId })) as any
   const poolInfo = data[0] as ApiV3PoolInfoStandardItem
   const poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId)
@@ -189,4 +189,16 @@ export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: 
     txVersion,
   })
   return executeTx.transaction as Transaction
+}
+
+export function createCuLimitIns() {
+  return ComputeBudgetProgram.setComputeUnitLimit({ 
+    units: 1000000 
+  });
+}
+
+export function createCuPriceIns() {
+  return ComputeBudgetProgram.setComputeUnitPrice({ 
+    microLamports: 50_000 
+  });
 }
