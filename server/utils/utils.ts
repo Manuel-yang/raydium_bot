@@ -87,6 +87,7 @@ export const initSdk = async (connection: Connection, keypair: Keypair) => {
   raydium = await Raydium.load({
     owner,
     connection,
+    cluster: "mainnet",
     disableFeatureCheck: true,
   })
   return raydium
@@ -151,8 +152,8 @@ export async function getWallet(privateKey: string) : Promise<[NodeWallet , Keyp
 }
 
 
-export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: number, txVersion = TxVersion.LEGACY): Promise<Transaction> {
-
+export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: any, txVersion = TxVersion.LEGACY): Promise<Transaction> {
+  
   const data = (await raydium.api.fetchPoolById({ ids: poolId })) as any
   const poolInfo = data[0] as ApiV3PoolInfoStandardItem
   const poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId)
@@ -165,7 +166,7 @@ export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: 
   const pool = res[0]
 
   await raydium.liquidity.initLayout()
-  const out = raydium.liquidity.computeAmountOut({
+  const out = await raydium.liquidity.computeAmountOut({
     poolInfo: {
       ...poolInfo,
       baseReserve: pool.baseReserve,
@@ -177,7 +178,6 @@ export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: 
     slippage: Number(process.env.SLIPPAGE!),
   })
 
-  // console.log(poolInfo)
 
   const executeTx = await raydium.liquidity.swap({
     poolInfo,
