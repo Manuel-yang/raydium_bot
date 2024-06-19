@@ -1,6 +1,5 @@
 import { TokenListProvider } from "@solana/spl-token-registry";
 import { PoolInfo } from "server/type/poolInfo";
-import moment from 'moment-timezone';
 import * as anchor from "@project-serum/anchor"
 import { ApiV3PoolInfoStandardItem, Raydium, TxVersion, fetchMultipleInfo, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2/lib/index'
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
@@ -153,7 +152,7 @@ export async function getWallet(privateKey: string) : Promise<[NodeWallet , Keyp
 
 
 export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: any, txVersion = TxVersion.LEGACY): Promise<Transaction> {
-  
+  console.log(poolId)
   const data = (await raydium.api.fetchPoolById({ ids: poolId })) as any
   const poolInfo = data[0] as ApiV3PoolInfoStandardItem
   const poolKeys = await raydium.liquidity.getAmmPoolKeys(poolId)
@@ -182,12 +181,13 @@ export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: 
   const executeTx = await raydium.liquidity.swap({
     poolInfo,
     amountIn: new anchor.BN(amountIn),
-    amountOut: out.amountOut,
+    amountOut: out.minAmountOut,
     fixedSide: 'in',
     inputMint: poolInfo.mintA.address,
     associatedOnly: false,
     txVersion,
   })
+
   return executeTx.transaction as Transaction
 }
 
