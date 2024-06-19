@@ -1,4 +1,4 @@
-import { getPoolInfo, getTokenMetadata, } from "../../utils/utils";
+import { getCoinInfo, getPoolInfo, getTokenMetadata, } from "../../utils/utils";
 import { RaydiumService } from "./raydium.service";
 
 export class TelegramService {
@@ -10,14 +10,15 @@ export class TelegramService {
 
       const symbolDest = tokenMetadataDest ? tokenMetadataDest.symbol : "Can't get synbol metadata"
   
-      if (symbolDest != "SOL" && symbolDest != "USDT" && symbolDest != "USDC" ) {
+      // if (symbolDest != "SOL" && symbolDest != "USDT" && symbolDest != "USDC" ) {
         const poolInfo = await getPoolInfo(tokenDest.mint)
+        const coinInfo = await getCoinInfo(tokenDest.mint)
         console.log("start to generate swap tx")
         const rayService = new RaydiumService()
         await rayService.txTracker(poolInfo.poolAddress)
         console.log("swap generate successfully")
          
-      }
+      // }
     }
   }
 }

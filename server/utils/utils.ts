@@ -1,11 +1,12 @@
 import { TokenListProvider } from "@solana/spl-token-registry";
-import { PoolInfo } from "server/type/poolInfo";
+import { PoolInfo } from "server/type/PoolInfo";
 import * as anchor from "@project-serum/anchor"
 import { ApiV3PoolInfoStandardItem, Raydium, TxVersion, fetchMultipleInfo, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2/lib/index'
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { ComputeBudgetProgram, Connection, Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
 import base58 from "bs58";
+import { CoinInfo } from "server/type/CoinInfo";
 const axios = require('axios');
 
 
@@ -201,4 +202,28 @@ export function createCuPriceIns() {
   return ComputeBudgetProgram.setComputeUnitPrice({ 
     microLamports: 50_000 
   });
+}
+
+export async function getCoinInfo(mintAddress: string) {
+  let config = {
+    method: 'get',
+    maxBodyLength: Infinity,
+    url: `https://gmgn.ai/defi/quotation/v1/tokens/sol/${mintAddress}`,
+  };
+
+  const res = await axios.request(config)
+  const data = res.data.data.token
+  const coinInfo: CoinInfo = {
+    symbol: data.symbol,
+    name: data.name,
+    liquidity: data.liquidity,
+    holder_count: data.holder_count,
+    market_cap: data.market_cap,
+    top_10_holder_rate: data.top_10_holder_rate,
+    renounced_mint: data.renounced_mint,
+    renounced_freeze_account: data.renounced_freeze_account,
+    burn_ratio: data.burn_ratio,
+  }
+  console.log(coinInfo)
+  return coinInfo
 }
