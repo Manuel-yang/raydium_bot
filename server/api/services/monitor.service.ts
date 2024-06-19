@@ -1,7 +1,7 @@
 import { checkCoinInfo, getCoinInfo, getPoolInfo, getTokenMetadata, } from "../../utils/utils";
 import { RaydiumService } from "./raydium.service";
 
-export class TelegramService {
+export class MonitorService {
 
   async swapMsgSender(tokenDest: any) {
 
