@@ -227,3 +227,14 @@ export async function getCoinInfo(mintAddress: string) {
   console.log(coinInfo)
   return coinInfo
 }
+
+export function checkCoinInfo(coinInfo: CoinInfo) {
+  // no mint and no blacklist
+  if(coinInfo.renounced_mint == 1 && coinInfo.renounced_freeze_account == 1) {
+    // burn ratio needs above 80%
+    if(Number(coinInfo.burn_ratio) >= 0.80) {
+      return true
+    }
+  }
+  return false
+}

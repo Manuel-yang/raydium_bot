@@ -17,11 +17,7 @@ export class RaydiumService {
     .add(cuLimit)
     .add(cuPrice)
 
-    // const totalTasks: any[] = []
-    // for (let i = 0; i < 3; i++) {
-    //   totalTasks.push(sendTxByJito(provider, swapTx))
-    // }
-    // const txSign = await sendTxByJito(provider, swapTx)
+
     const txSign = await provider.sendAndConfirm(swapTx,[], {skipPreflight:true})
     // const res = await (Promise.all(totalTasks))
     // console.log(res)
