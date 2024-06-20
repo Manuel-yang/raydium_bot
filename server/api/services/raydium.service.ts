@@ -18,10 +18,10 @@ export class RaydiumService {
     .add(cuPrice)
 
 
-    const txSign = await provider.sendAndConfirm(swapTx,[], {skipPreflight:true})
+    // const txSign = await provider.sendAndConfirm(swapTx,[], {skipPreflight:true})
     // const res = await (Promise.all(totalTasks))
     // console.log(res)
-
+    const txSign = await sendTxByJito(provider, swapTx)
     console.log(txSign)
   }
 }
