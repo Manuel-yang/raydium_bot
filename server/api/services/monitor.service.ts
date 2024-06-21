@@ -1,5 +1,7 @@
 import { checkCoinInfo, getCoinInfo, getPoolInfo, getTokenMetadata, } from "../../utils/utils";
 import { RaydiumService } from "./raydium.service";
+import logger from '../../common/logger';
+
 
 export class MonitorService {
 
@@ -11,11 +13,12 @@ export class MonitorService {
         if (symbolDest != "SOL" && symbolDest != "USDT" && symbolDest != "USDC" ) {
           const poolInfo = await getPoolInfo(tokenDest.mint)
           const coinInfo = await getCoinInfo(tokenDest.mint)
+          // console.log(coinInfo)
+          logger.info(`receive info: poolInfo:${JSON.stringify(poolInfo)}-----coinInfo:${JSON.stringify(coinInfo)}`)
           if (checkCoinInfo(coinInfo)) {
-            console.log("start to generate swap tx")
+            logger.info(`start to swap: poolInfo:${JSON.stringify(poolInfo)}-----coinInfo:${JSON.stringify(coinInfo)}`)
             const rayService = new RaydiumService()
             await rayService.txTracker(poolInfo.poolAddress)
-            console.log("swap generate successfully")
           }
         }
       }
