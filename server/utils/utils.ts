@@ -232,7 +232,7 @@ export function checkCoinInfo(coinInfo: CoinInfo) {
   // no mint and no blacklist
   if(coinInfo.renounced_mint == 1 && coinInfo.renounced_freeze_account == 1) {
     // burn ratio needs above 80%
-    if(coinInfo.burn_ratio && Number(coinInfo.burn_ratio) >= 0.80) {
+    if(coinInfo.burn_ratio && Number(coinInfo.burn_ratio) >= Number(process.env.BURN_RATIO)) {
       return true
     }
   }
