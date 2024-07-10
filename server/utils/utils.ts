@@ -4,7 +4,7 @@ import * as anchor from "@project-serum/anchor"
 import { ApiV3PoolInfoStandardItem, Raydium, TxVersion, fetchMultipleInfo, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2/lib/index'
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { ComputeBudgetProgram, Connection, Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
+import { ComputeBudgetProgram, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import base58 from "bs58";
 import { CoinInfo } from "server/type/CoinInfo";
 const axios = require('axios');
@@ -59,6 +59,7 @@ export const getPoolInfo = async (mintAddress: string) => {
     const pairs = rawData.pairs
     const pair = pairs.filter((e: any) => e.dexId == "raydium")[0]
     if (pair.dexId == "raydium") {
+      console.log(pair)
       const baseToken = pair.baseToken
       const pairCreatedAt = pair.pairCreatedAt
       const poolInfo: PoolInfo = {
@@ -152,7 +153,7 @@ export async function getWallet(privateKey: string) : Promise<[NodeWallet , Keyp
 }
 
 
-export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: any, txVersion = TxVersion.LEGACY): Promise<Transaction> {
+export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: any, swapIn: boolean, txVersion = TxVersion.LEGACY): Promise<Transaction> {
   console.log(poolId)
   const data = (await raydium.api.fetchPoolById({ ids: poolId })) as any
   const poolInfo = data[0] as ApiV3PoolInfoStandardItem
@@ -173,8 +174,8 @@ export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: 
       quoteReserve: pool.quoteReserve,
     },
     amountIn: new anchor.BN(amountIn),
-    mintIn: poolInfo.mintA.address, 
-    mintOut: poolInfo.mintB.address,
+    mintIn: swapIn ? poolInfo.mintA.address : poolInfo.mintB.address, 
+    mintOut: swapIn ? poolInfo.mintB.address : poolInfo.mintA.address,
     slippage: Number(process.env.SLIPPAGE!),
   })
 
@@ -184,7 +185,7 @@ export async function generateRayTx(raydium: Raydium, poolId: string, amountIn: 
     amountIn: new anchor.BN(amountIn),
     amountOut: out.minAmountOut,
     fixedSide: 'in',
-    inputMint: poolInfo.mintA.address,
+    inputMint: swapIn ? poolInfo.mintA.address : poolInfo.mintB.address,
     associatedOnly: false,
     txVersion,
   })
@@ -231,10 +232,26 @@ export async function getCoinInfo(mintAddress: string) {
 export function checkCoinInfo(coinInfo: CoinInfo) {
   // no mint and no blacklist
   if(coinInfo.renounced_mint == 1 && coinInfo.renounced_freeze_account == 1) {
+    return true
     // burn ratio needs above 80%
-    if(coinInfo.burn_ratio && Number(coinInfo.burn_ratio) >= Number(process.env.BURN_RATIO)) {
-      return true
-    }
+    // if(coinInfo.burn_ratio && Number(coinInfo.burn_ratio) >= Number(process.env.BURN_RATIO)) {
+    //   return true
+    // }
   }
   return false
+}
+
+export const getCurrentToken = async (publicKey: PublicKey) => {
+
+  let config = {
+    method: 'get',
+    maxBodyLength: Infinity,
+    url: `https://gmgn.ai/defi/quotation/v1/wallet/sol/holdings/${publicKey}?orderby=last_active_timestamp&direction=desc&showsmall=true&sellout=true&limit=50&tx30d=true`,
+    headers: { }
+  };
+
+  const res = await axios.request(config)
+  const data = res.data
+  return data.data.holdings
+
 }

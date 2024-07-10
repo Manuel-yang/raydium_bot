@@ -12,7 +12,7 @@ export class RaydiumService {
     const provider = await createProvider(connection,wallet)
     const raydium = await initSdk(connection, keypair)
     // console.log(poolAddress)
-    const swapTx = await generateRayTx(raydium, poolAddress, new BN(Number(process.env.AMOUNT_IN) * LAMPORTS_PER_SOL))
+    const swapTx = await generateRayTx(raydium, poolAddress, new BN(Number(process.env.AMOUNT_IN) * LAMPORTS_PER_SOL), true)
     swapTx
     .add(cuLimit)
     .add(cuPrice)
